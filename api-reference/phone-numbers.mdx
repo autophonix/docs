@@ -1,0 +1,162 @@
+---
+title: "Phone Numbers"
+description: "Provision and manage phone numbers for your AI agents"
+---
+
+Phone numbers are the gateway for calls to reach your AI agents. You can provision new numbers and assign them to specific agents for inbound and outbound calls.
+
+## Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/v1/orgs/:org_id/phone-numbers` | List phone numbers |
+| `POST` | `/v1/orgs/:org_id/phone-numbers` | Provision a new number |
+| `GET` | `/v1/orgs/:org_id/phone-numbers/:id` | Get phone number details |
+| `PATCH` | `/v1/orgs/:org_id/phone-numbers/:id` | Update phone number |
+| `DELETE` | `/v1/orgs/:org_id/phone-numbers/:id` | Release phone number |
+
+## Phone Number Object
+
+```json
+{
+  "id": 101,
+  "number": "+14155551234",
+  "status": "active",
+  "inbound_agent_id": 12,
+  "outbound_agent_id": null
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | integer | Unique identifier |
+| `number` | string | E.164 formatted phone number |
+| `status` | string | Status: `active`, `pending`, `released` |
+| `inbound_agent_id` | integer \| null | Agent that handles incoming calls |
+| `outbound_agent_id` | integer \| null | Default agent for outbound calls |
+
+---
+
+## List Phone Numbers
+
+Retrieve all phone numbers in your organization.
+
+<CodeGroup>
+```bash cURL
+curl https://api.thunderphone.ai/v1/orgs/{org_id}/phone-numbers \
+  -H "Authorization: Token YOUR_API_TOKEN"
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    f"https://api.thunderphone.ai/v1/orgs/{org_id}/phone-numbers",
+    headers={"Authorization": "Token YOUR_API_TOKEN"}
+)
+numbers = response.json()
+```
+
+```javascript Node.js
+const response = await fetch(
+  `https://api.thunderphone.ai/v1/orgs/${orgId}/phone-numbers`,
+  {
+    headers: { 'Authorization': 'Token YOUR_API_TOKEN' }
+  }
+);
+const numbers = await response.json();
+```
+</CodeGroup>
+
+---
+
+## Provision a Phone Number
+
+Request a new phone number for your organization.
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.thunderphone.ai/v1/orgs/{org_id}/phone-numbers \
+  -H "Authorization: Token YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "inbound_agent_id": 12
+  }'
+```
+
+```python Python
+response = requests.post(
+    f"https://api.thunderphone.ai/v1/orgs/{org_id}/phone-numbers",
+    headers={
+        "Authorization": "Token YOUR_API_TOKEN",
+        "Content-Type": "application/json"
+    },
+    json={
+        "inbound_agent_id": 12
+    }
+)
+phone = response.json()
+print(f"Provisioned: {phone['number']}")
+```
+</CodeGroup>
+
+### Response
+
+```json
+{
+  "id": 101,
+  "number": "+14155551234",
+  "status": "active",
+  "inbound_agent_id": 12,
+  "outbound_agent_id": null
+}
+```
+
+---
+
+## Update Phone Number
+
+Change the agents assigned to a phone number.
+
+<CodeGroup>
+```bash cURL
+curl -X PATCH https://api.thunderphone.ai/v1/orgs/{org_id}/phone-numbers/101 \
+  -H "Authorization: Token YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "inbound_agent_id": 15,
+    "outbound_agent_id": 16
+  }'
+```
+
+```python Python
+response = requests.patch(
+    f"https://api.thunderphone.ai/v1/orgs/{org_id}/phone-numbers/101",
+    headers={
+        "Authorization": "Token YOUR_API_TOKEN",
+        "Content-Type": "application/json"
+    },
+    json={
+        "inbound_agent_id": 15,
+        "outbound_agent_id": 16
+    }
+)
+```
+</CodeGroup>
+
+---
+
+## Delete Phone Number
+
+Release a phone number from your organization.
+
+<Warning>
+  Releasing a phone number is permanent. The number may become available to other users.
+</Warning>
+
+```bash
+curl -X DELETE https://api.thunderphone.ai/v1/orgs/{org_id}/phone-numbers/101 \
+  -H "Authorization: Token YOUR_API_TOKEN"
+```
+
+Response: `204 No Content`

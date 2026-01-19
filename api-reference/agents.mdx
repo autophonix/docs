@@ -1,0 +1,239 @@
+---
+title: "Agents"
+description: "Create and manage AI agents with custom prompts, voices, and tools"
+---
+
+Agents define how your AI handles phone conversations. Each agent has a system prompt, voice configuration, and optional function tools.
+
+## Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/v1/orgs/:org_id/agents` | List agents |
+| `POST` | `/v1/orgs/:org_id/agents` | Create agent |
+| `GET` | `/v1/orgs/:org_id/agents/:id` | Get agent |
+| `PATCH` | `/v1/orgs/:org_id/agents/:id` | Update agent |
+| `DELETE` | `/v1/orgs/:org_id/agents/:id` | Delete agent |
+| `POST` | `/v1/orgs/:org_id/agents/:id/duplicate` | Duplicate agent |
+
+## Agent Object
+
+```json
+{
+  "id": 12,
+  "name": "Customer Support",
+  "prompt": "You are a helpful customer support agent...",
+  "voice": "en-US-Standard-Journey-D",
+  "product": "spark",
+  "background_track": null,
+  "tools": [],
+  "created_at": "2025-01-01T00:00:00Z",
+  "updated_at": "2025-01-01T00:00:00Z"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | integer | Unique identifier |
+| `name` | string | Display name for the agent |
+| `prompt` | string | System prompt that defines agent behavior |
+| `voice` | string | Voice ID for text-to-speech |
+| `product` | string | `spark`, `bolt`, or `zap` |
+| `background_track` | string \| null | `null` or `"CALL_CENTER"` |
+| `tools` | array | Function tools the agent can call |
+| `created_at` | string | ISO 8601 timestamp |
+| `updated_at` | string | ISO 8601 timestamp |
+
+### Product Options
+
+| Product | Description |
+|---------|-------------|
+| `spark` | Fastest response times, optimized for speed |
+| `bolt` | Balanced performance and quality |
+| `zap` | Highest quality responses |
+
+---
+
+## Create an Agent
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.thunderphone.ai/v1/orgs/{org_id}/agents \
+  -H "Authorization: Token YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Appointment Scheduler",
+    "prompt": "You are a friendly appointment scheduling assistant for Dr. Smith'\''s office. Help callers book, reschedule, or cancel appointments. Always confirm the date and time before finalizing.",
+    "voice": "en-US-Standard-Journey-D",
+    "product": "spark"
+  }'
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    f"https://api.thunderphone.ai/v1/orgs/{org_id}/agents",
+    headers={
+        "Authorization": "Token YOUR_API_TOKEN",
+        "Content-Type": "application/json"
+    },
+    json={
+        "name": "Appointment Scheduler",
+        "prompt": "You are a friendly appointment scheduling assistant for Dr. Smith's office. Help callers book, reschedule, or cancel appointments. Always confirm the date and time before finalizing.",
+        "voice": "en-US-Standard-Journey-D",
+        "product": "spark"
+    }
+)
+agent = response.json()
+```
+
+```javascript Node.js
+const response = await fetch(
+  `https://api.thunderphone.ai/v1/orgs/${orgId}/agents`,
+  {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Token YOUR_API_TOKEN',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      name: 'Appointment Scheduler',
+      prompt: "You are a friendly appointment scheduling assistant for Dr. Smith's office...",
+      voice: 'en-US-Standard-Journey-D',
+      product: 'spark'
+    })
+  }
+);
+const agent = await response.json();
+```
+</CodeGroup>
+
+---
+
+## Create Agent with Function Tools
+
+Agents can call external APIs during conversations using function tools.
+
+```bash
+curl -X POST https://api.thunderphone.ai/v1/orgs/{org_id}/agents \
+  -H "Authorization: Token YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Appointment Scheduler",
+    "prompt": "You are a scheduling assistant. Use the search_appointments tool to find available times.",
+    "voice": "en-US-Standard-Journey-D",
+    "product": "spark",
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "search_appointments",
+          "description": "Find available appointment slots",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "date": {
+                "type": "string",
+                "description": "Date in YYYY-MM-DD format"
+              },
+              "service": {
+                "type": "string",
+                "description": "Type of service requested"
+              }
+            },
+            "required": ["date"]
+          }
+        },
+        "endpoint": {
+          "url": "https://api.example.com/appointments/search",
+          "method": "POST",
+          "headers": {
+            "X-Api-Key": "your-api-key"
+          }
+        }
+      }
+    ]
+  }'
+```
+
+<Tip>
+  See [Function Tools](/tools/overview) for complete documentation on tool configuration.
+</Tip>
+
+---
+
+## List Agents
+
+<CodeGroup>
+```bash cURL
+curl https://api.thunderphone.ai/v1/orgs/{org_id}/agents \
+  -H "Authorization: Token YOUR_API_TOKEN"
+```
+
+```python Python
+response = requests.get(
+    f"https://api.thunderphone.ai/v1/orgs/{org_id}/agents",
+    headers={"Authorization": "Token YOUR_API_TOKEN"}
+)
+agents = response.json()
+```
+</CodeGroup>
+
+---
+
+## Update an Agent
+
+<CodeGroup>
+```bash cURL
+curl -X PATCH https://api.thunderphone.ai/v1/orgs/{org_id}/agents/12 \
+  -H "Authorization: Token YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Updated system prompt...",
+    "voice": "en-US-Standard-Journey-F"
+  }'
+```
+
+```python Python
+response = requests.patch(
+    f"https://api.thunderphone.ai/v1/orgs/{org_id}/agents/12",
+    headers={
+        "Authorization": "Token YOUR_API_TOKEN",
+        "Content-Type": "application/json"
+    },
+    json={
+        "prompt": "Updated system prompt...",
+        "voice": "en-US-Standard-Journey-F"
+    }
+)
+```
+</CodeGroup>
+
+---
+
+## Duplicate an Agent
+
+Create a copy of an existing agent with all its settings.
+
+```bash
+curl -X POST https://api.thunderphone.ai/v1/orgs/{org_id}/agents/12/duplicate \
+  -H "Authorization: Token YOUR_API_TOKEN"
+```
+
+The response contains the new duplicated agent with a new ID.
+
+---
+
+## Delete an Agent
+
+<Warning>
+  Deleting an agent is permanent. Make sure no phone numbers are using this agent.
+</Warning>
+
+```bash
+curl -X DELETE https://api.thunderphone.ai/v1/orgs/{org_id}/agents/12 \
+  -H "Authorization: Token YOUR_API_TOKEN"
+```
+
+Response: `204 No Content`

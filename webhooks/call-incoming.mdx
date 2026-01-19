@@ -1,0 +1,201 @@
+---
+title: "call.incoming Webhook"
+description: "Handle incoming calls and dynamically configure agents"
+---
+
+The `call.incoming` webhook fires when a call starts. You can respond with a custom agent configuration to dynamically control how the AI handles the call.
+
+## Webhook Payload
+
+```json
+{
+  "type": "call.incoming",
+  "data": {
+    "from_number": "+15555550100",
+    "to_number": "+15555550200",
+    "call_id": 987654321
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `from_number` | string | Caller's phone number |
+| `to_number` | string | Your ThunderPhone number |
+| `call_id` | integer | Unique call identifier |
+
+---
+
+## Response
+
+Respond with the agent configuration to use for this call. If you don't respond (or return an empty response), ThunderPhone uses the default agent configured for the phone number.
+
+### Required Fields
+
+```json
+{
+  "prompt": "You are a helpful booking assistant for ABC Restaurant.",
+  "voice": "en-US-Standard-Journey-D",
+  "product": "spark"
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `prompt` | string | Yes | System prompt for the AI agent |
+| `voice` | string | Yes | Voice ID for text-to-speech |
+| `product` | string | Yes | `spark`, `bolt`, or `zap` |
+| `background_track` | string \| null | No | `null` or `"CALL_CENTER"` |
+| `tools` | array | No | Function tools for the agent |
+
+<Note>
+  `voice_name` is also accepted but normalized to `voice`. Unknown top-level keys are rejected.
+</Note>
+
+---
+
+## Example Handler
+
+<CodeGroup>
+```python Python
+from fastapi import FastAPI, Request, HTTPException
+import hmac
+import hashlib
+import json
+
+app = FastAPI()
+WEBHOOK_SECRET = "your-webhook-secret"
+
+def verify_signature(body: bytes, signature: str) -> bool:
+    expected = hmac.new(WEBHOOK_SECRET.encode(), body, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, signature)
+
+@app.post("/thunderphone-webhook")
+async def webhook(request: Request):
+    body = await request.body()
+    signature = request.headers.get("X-ThunderPhone-Signature", "")
+    
+    if not verify_signature(body, signature):
+        raise HTTPException(status_code=401)
+    
+    event = json.loads(body)
+    
+    if event["type"] == "call.incoming":
+        from_number = event["data"]["from_number"]
+        
+        # Customize prompt based on caller
+        if from_number.startswith("+1415"):
+            prompt = "Greet the caller as a San Francisco local..."
+        else:
+            prompt = "You are a friendly customer support agent..."
+        
+        return {
+            "prompt": prompt,
+            "voice": "en-US-Standard-Journey-D",
+            "product": "spark"
+        }
+    
+    return {"status": "ok"}
+```
+
+```javascript Node.js
+const express = require('express');
+const crypto = require('crypto');
+
+const app = express();
+const WEBHOOK_SECRET = 'your-webhook-secret';
+
+app.post('/thunderphone-webhook', 
+  express.raw({type: 'application/json'}), 
+  (req, res) => {
+    const signature = req.headers['x-thunderphone-signature'];
+    const expected = crypto
+      .createHmac('sha256', WEBHOOK_SECRET)
+      .update(req.body)
+      .digest('hex');
+    
+    if (!crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature))) {
+      return res.status(401).send('Invalid signature');
+    }
+    
+    const event = JSON.parse(req.body);
+    
+    if (event.type === 'call.incoming') {
+      const fromNumber = event.data.from_number;
+      
+      // Customize based on caller
+      const prompt = fromNumber.startsWith('+1415')
+        ? 'Greet the caller as a San Francisco local...'
+        : 'You are a friendly customer support agent...';
+      
+      return res.json({
+        prompt,
+        voice: 'en-US-Standard-Journey-D',
+        product: 'spark'
+      });
+    }
+    
+    res.json({ status: 'ok' });
+  }
+);
+```
+</CodeGroup>
+
+---
+
+## Response with Function Tools
+
+Include tools to let the AI call your APIs during the conversation:
+
+```json
+{
+  "prompt": "You are a booking assistant. Use the available tools to help customers schedule appointments.",
+  "voice": "en-US-Standard-Journey-D",
+  "product": "spark",
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "search_appointments",
+        "description": "Find available appointment slots",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "date": {
+              "type": "string",
+              "description": "Date in YYYY-MM-DD format"
+            },
+            "service": {
+              "type": "string",
+              "description": "Type of service"
+            }
+          },
+          "required": ["date"]
+        }
+      },
+      "endpoint": {
+        "url": "https://api.example.com/appointments/search",
+        "method": "POST",
+        "headers": {
+          "X-Api-Key": "your-key",
+          "X-Request-Source": "ThunderPhone"
+        }
+      }
+    }
+  ]
+}
+```
+
+<Tip>
+  The `endpoint` configuration tells ThunderPhone how to call your API when the AI invokes the tool. See [Function Tools](/tools/overview) for details.
+</Tip>
+
+---
+
+## Product Options
+
+| Product | Description | Best For |
+|---------|-------------|----------|
+| `spark` | Fastest response times | High-volume, simple interactions |
+| `bolt` | Balanced speed and quality | General use cases |
+| `zap` | Highest quality responses | Complex conversations |

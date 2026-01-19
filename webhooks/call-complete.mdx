@@ -1,0 +1,201 @@
+---
+title: "call.complete Webhook"
+description: "Receive call transcripts and recordings when calls end"
+---
+
+The `call.complete` webhook fires when a call ends. Use it to receive transcripts, recording URLs, and call metadata for logging, analytics, or follow-up actions.
+
+## Webhook Payload
+
+```json
+{
+  "type": "call.complete",
+  "data": {
+    "call_id": 987654321,
+    "from_number": "+15555550100",
+    "to_number": "+15555550200",
+    "end_reason": "ai_hangup",
+    "transcripts": [...],
+    "transfer_number": null,
+    "recording_url": "https://storage.googleapis.com/..."
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `call_id` | integer | Unique call identifier |
+| `from_number` | string | Caller's phone number |
+| `to_number` | string | Recipient's phone number |
+| `end_reason` | string | Why the call ended |
+| `transcripts` | array | Full conversation transcript |
+| `transfer_number` | string \| null | Number transferred to (if applicable) |
+| `recording_url` | string | URL to call recording |
+
+### End Reasons
+
+| Reason | Description |
+|--------|-------------|
+| `ai_hangup` | AI ended the call |
+| `user_hangup` | Caller hung up |
+| `transfer` | Call was transferred |
+| `error` | Call failed due to error |
+| `timeout` | Call timed out |
+
+---
+
+## Transcript Format
+
+The `transcripts` array contains all conversation turns with timestamps:
+
+```json
+{
+  "transcripts": [
+    {
+      "role": "user",
+      "content_type": "text/plain",
+      "content": "Hi, I'm calling about my appointment.",
+      "start_ms": 1200,
+      "end_ms": 4100
+    },
+    {
+      "role": "assistant",
+      "content_type": "text/plain",
+      "content": "Sure, I'd be happy to help. What date works best?",
+      "start_ms": 4200,
+      "end_ms": 6100
+    },
+    {
+      "role": "tool_call",
+      "content_type": "application/json",
+      "content": {
+        "name": "search_appointments",
+        "arguments": { "date": "2025-01-02" }
+      },
+      "start_ms": 6200,
+      "end_ms": 6200
+    },
+    {
+      "role": "tool_response",
+      "content_type": "application/json",
+      "content": {
+        "available_slots": ["9:00 AM", "2:00 PM", "4:30 PM"]
+      },
+      "start_ms": 6210,
+      "end_ms": 6210
+    }
+  ]
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `role` | string | `user`, `assistant`, `tool_call`, or `tool_response` |
+| `content_type` | string | `text/plain` for speech, `application/json` for tools |
+| `content` | string \| object | Transcript text or JSON payload |
+| `start_ms` | integer | Start timestamp (ms, aligned to recording) |
+| `end_ms` | integer | End timestamp (ms, aligned to recording) |
+
+<Note>
+  Tool calls and responses may be instantaneous (`start_ms == end_ms`).
+</Note>
+
+---
+
+## Example Handler
+
+<CodeGroup>
+```python Python
+from fastapi import FastAPI, Request
+import json
+
+app = FastAPI()
+
+@app.post("/thunderphone-webhook")
+async def webhook(request: Request):
+    event = await request.json()
+    
+    if event["type"] == "call.complete":
+        data = event["data"]
+        
+        # Log call summary
+        print(f"Call {data['call_id']} ended: {data['end_reason']}")
+        
+        # Extract user messages for analysis
+        user_messages = [
+            t["content"] 
+            for t in data["transcripts"] 
+            if t["role"] == "user"
+        ]
+        
+        # Save to database
+        await save_call_record(
+            call_id=data["call_id"],
+            from_number=data["from_number"],
+            transcripts=data["transcripts"],
+            recording_url=data["recording_url"]
+        )
+        
+        # Trigger follow-up actions
+        if data["end_reason"] == "transfer":
+            await notify_team(data["transfer_number"], data["call_id"])
+    
+    return {"status": "ok"}
+```
+
+```javascript Node.js
+const express = require('express');
+const app = express();
+
+app.use(express.json());
+
+app.post('/thunderphone-webhook', async (req, res) => {
+  const event = req.body;
+  
+  if (event.type === 'call.complete') {
+    const { call_id, from_number, transcripts, recording_url, end_reason } = event.data;
+    
+    console.log(`Call ${call_id} ended: ${end_reason}`);
+    
+    // Extract user messages
+    const userMessages = transcripts
+      .filter(t => t.role === 'user')
+      .map(t => t.content);
+    
+    // Save to database
+    await saveCallRecord({
+      callId: call_id,
+      fromNumber: from_number,
+      transcripts,
+      recordingUrl: recording_url
+    });
+    
+    // Trigger follow-up
+    if (end_reason === 'transfer') {
+      await notifyTeam(event.data.transfer_number, call_id);
+    }
+  }
+  
+  res.json({ status: 'ok' });
+});
+```
+</CodeGroup>
+
+---
+
+## Common Use Cases
+
+<CardGroup cols={2}>
+  <Card title="CRM Integration" icon="database">
+    Save call transcripts and recordings to your CRM for customer history.
+  </Card>
+  <Card title="Analytics" icon="chart-line">
+    Analyze transcripts to extract insights about customer needs.
+  </Card>
+  <Card title="Follow-up Actions" icon="bell">
+    Trigger notifications or emails based on call outcomes.
+  </Card>
+  <Card title="Quality Assurance" icon="clipboard-check">
+    Review transcripts and recordings for agent training.
+  </Card>
+</CardGroup>

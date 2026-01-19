@@ -1,0 +1,207 @@
+---
+title: "Calls"
+description: "View call history, transcripts, and recordings"
+---
+
+Access detailed information about calls handled by your AI agents, including transcripts and recordings.
+
+## Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/v1/orgs/:org_id/calls` | List calls |
+| `GET` | `/v1/orgs/:org_id/calls/:call_id` | Get call details |
+| `GET` | `/v1/orgs/:org_id/calls/:call_id/audio` | Get call recording |
+| `GET` | `/v1/orgs/:org_id/calls/:call_id/transcript` | Get call transcript |
+
+## Call Object
+
+```json
+{
+  "call_id": 987654321,
+  "agent_id": 12,
+  "direction": "inbound",
+  "from_number": "+15555551234",
+  "to_number": "+14155550000",
+  "start_time": "2025-01-01T00:00:00Z",
+  "end_time": "2025-01-01T00:02:00Z",
+  "duration_seconds": 120,
+  "status": "completed",
+  "end_reason": "ai_hangup",
+  "recording_url": "https://storage.googleapis.com/..."
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `call_id` | integer | Unique call identifier |
+| `agent_id` | integer | The agent that handled the call |
+| `direction` | string | `inbound` or `outbound` |
+| `from_number` | string | Caller's phone number |
+| `to_number` | string | Recipient's phone number |
+| `start_time` | string | ISO 8601 call start time |
+| `end_time` | string | ISO 8601 call end time |
+| `duration_seconds` | integer | Call duration in seconds |
+| `status` | string | Call status (e.g., `completed`, `failed`) |
+| `end_reason` | string | Why the call ended |
+| `recording_url` | string | URL to call recording |
+
+<Note>
+  For **inbound** calls, `to_number` is your ThunderPhone number. For **outbound** calls, `from_number` is your ThunderPhone number.
+</Note>
+
+---
+
+## List Calls
+
+Retrieve calls with optional filtering.
+
+### Query Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `agent_id` | integer | Filter by agent |
+| `direction` | string | `inbound` or `outbound` |
+| `status` | string | Filter by status |
+| `from_number` | string | Filter by caller |
+| `to_number` | string | Filter by recipient |
+| `start_date` | string | Calls after this date (ISO 8601) |
+| `end_date` | string | Calls before this date (ISO 8601) |
+| `limit` | integer | Max results (default: 50) |
+| `offset` | integer | Pagination offset |
+
+<CodeGroup>
+```bash cURL
+# List recent calls
+curl "https://api.thunderphone.ai/v1/orgs/{org_id}/calls?limit=20" \
+  -H "Authorization: Token YOUR_API_TOKEN"
+
+# Filter by agent and direction
+curl "https://api.thunderphone.ai/v1/orgs/{org_id}/calls?agent_id=12&direction=inbound" \
+  -H "Authorization: Token YOUR_API_TOKEN"
+```
+
+```python Python
+import requests
+
+# List calls with filters
+response = requests.get(
+    f"https://api.thunderphone.ai/v1/orgs/{org_id}/calls",
+    headers={"Authorization": "Token YOUR_API_TOKEN"},
+    params={
+        "agent_id": 12,
+        "direction": "inbound",
+        "limit": 20
+    }
+)
+calls = response.json()
+```
+
+```javascript Node.js
+const params = new URLSearchParams({
+  agent_id: '12',
+  direction: 'inbound',
+  limit: '20'
+});
+
+const response = await fetch(
+  `https://api.thunderphone.ai/v1/orgs/${orgId}/calls?${params}`,
+  {
+    headers: { 'Authorization': 'Token YOUR_API_TOKEN' }
+  }
+);
+const calls = await response.json();
+```
+</CodeGroup>
+
+---
+
+## Get Call Details
+
+Retrieve details for a specific call.
+
+```bash
+curl https://api.thunderphone.ai/v1/orgs/{org_id}/calls/987654321 \
+  -H "Authorization: Token YOUR_API_TOKEN"
+```
+
+---
+
+## Get Call Recording
+
+Returns a redirect to a signed URL for the call recording (1-hour expiry).
+
+```bash
+curl -L https://api.thunderphone.ai/v1/orgs/{org_id}/calls/987654321/audio \
+  -H "Authorization: Token YOUR_API_TOKEN" \
+  -o recording.mp3
+```
+
+Response:
+```
+HTTP/1.1 302 Found
+Location: https://storage.googleapis.com/...?Signature=...&Expires=...
+```
+
+<Tip>
+  Use the `-L` flag with curl to follow the redirect automatically.
+</Tip>
+
+---
+
+## Get Call Transcript
+
+Retrieve the full conversation transcript with timestamps.
+
+```bash
+curl https://api.thunderphone.ai/v1/orgs/{org_id}/calls/987654321/transcript \
+  -H "Authorization: Token YOUR_API_TOKEN"
+```
+
+### Transcript Format
+
+```json
+[
+  {
+    "role": "user",
+    "content_type": "text/plain",
+    "content": "Hi, I'm calling about my appointment.",
+    "start_ms": 1200,
+    "end_ms": 4100
+  },
+  {
+    "role": "assistant",
+    "content_type": "text/plain",
+    "content": "Sure, I'd be happy to help. What day works best for you?",
+    "start_ms": 4200,
+    "end_ms": 6100
+  },
+  {
+    "role": "tool_call",
+    "content_type": "application/json",
+    "content": {
+      "name": "search_appointments",
+      "arguments": { "date": "2025-01-02" }
+    },
+    "start_ms": 6200,
+    "end_ms": 6200
+  },
+  {
+    "role": "tool_response",
+    "content_type": "application/json",
+    "content": {
+      "available_slots": ["9:00 AM", "2:00 PM"]
+    },
+    "start_ms": 6210,
+    "end_ms": 6210
+  }
+]
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `role` | string | `user`, `assistant`, `tool_call`, or `tool_response` |
+| `content_type` | string | `text/plain` or `application/json` |
+| `content` | string \| object | Transcript text or JSON payload |
+| `start_ms` | integer | Start timestamp (ms, aligned to recording) |
+| `end_ms` | integer | End timestamp (ms, aligned to recording) |

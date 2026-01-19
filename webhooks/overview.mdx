@@ -1,0 +1,153 @@
+---
+title: "Webhooks Overview"
+description: "Receive real-time notifications for call events"
+---
+
+ThunderPhone sends webhook events to your server for real-time call notifications. All events go to a single org-level URL that you configure.
+
+## Configuration
+
+Set your webhook URL via the API:
+
+```bash
+curl -X PUT https://api.thunderphone.ai/v1/orgs/{org_id}/webhook \
+  -H "Authorization: Token YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://your-server.com/thunderphone-webhook"}'
+```
+
+When you configure a webhook, ThunderPhone generates a `secret` for signature verification:
+
+```json
+{
+  "url": "https://your-server.com/thunderphone-webhook",
+  "secret": "whsec_abc123...",
+  "created_at": "2025-01-01T00:00:00Z",
+  "updated_at": "2025-01-01T00:00:00Z"
+}
+```
+
+<Warning>
+  Store the `secret` securely. You'll need it to verify webhook signatures.
+</Warning>
+
+---
+
+## Event Types
+
+| Event | Description |
+|-------|-------------|
+| `call.incoming` | A call has started - respond with agent configuration |
+| `call.complete` | A call has ended - includes transcript and recording |
+
+---
+
+## Payload Format
+
+All webhook payloads follow this structure:
+
+```json
+{
+  "type": "call.incoming",
+  "data": {
+    // Event-specific data
+  }
+}
+```
+
+---
+
+## Signature Verification
+
+All webhooks include an HMAC-SHA256 signature in the `X-ThunderPhone-Signature` header.
+
+### Verification Steps
+
+1. Get the raw request body (before any parsing)
+2. Compute HMAC-SHA256 of the body using your webhook secret
+3. Compare with the `X-ThunderPhone-Signature` header
+
+### Signature Format
+
+The payload is serialized with:
+- Sorted keys
+- No extra whitespace
+
+<CodeGroup>
+```python Python
+import hmac
+import hashlib
+import json
+
+def verify_signature(payload_body: bytes, signature: str, secret: str) -> bool:
+    """Verify the ThunderPhone webhook signature."""
+    expected = hmac.new(
+        secret.encode('utf-8'),
+        payload_body,
+        hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(expected, signature)
+
+# In your webhook handler:
+@app.post("/thunderphone-webhook")
+async def handle_webhook(request: Request):
+    body = await request.body()
+    signature = request.headers.get("X-ThunderPhone-Signature")
+    
+    if not verify_signature(body, signature, WEBHOOK_SECRET):
+        raise HTTPException(status_code=401, detail="Invalid signature")
+    
+    event = json.loads(body)
+    # Handle event...
+```
+
+```javascript Node.js
+const crypto = require('crypto');
+
+function verifySignature(payload, signature, secret) {
+  const expected = crypto
+    .createHmac('sha256', secret)
+    .update(payload)
+    .digest('hex');
+  
+  return crypto.timingSafeEqual(
+    Buffer.from(expected),
+    Buffer.from(signature)
+  );
+}
+
+// Express handler
+app.post('/thunderphone-webhook', express.raw({type: 'application/json'}), (req, res) => {
+  const signature = req.headers['x-thunderphone-signature'];
+  
+  if (!verifySignature(req.body, signature, WEBHOOK_SECRET)) {
+    return res.status(401).send('Invalid signature');
+  }
+  
+  const event = JSON.parse(req.body);
+  // Handle event...
+});
+```
+</CodeGroup>
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Respond quickly">
+    For `call.incoming` webhooks, ThunderPhone waits for your response to configure the call. Respond within 2 seconds to avoid delays.
+  </Accordion>
+
+  <Accordion title="Return 2xx status">
+    Always return a 2xx status code (200, 201, 204) to acknowledge receipt. Non-2xx responses may trigger retries.
+  </Accordion>
+
+  <Accordion title="Handle duplicates">
+    In rare cases, you may receive duplicate events. Use the `call_id` to deduplicate.
+  </Accordion>
+
+  <Accordion title="Verify signatures">
+    Always verify the `X-ThunderPhone-Signature` header to ensure requests are from ThunderPhone.
+  </Accordion>
+</AccordionGroup>

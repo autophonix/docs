@@ -1,97 +1,85 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "ThunderPhone API"
+description: "Build intelligent AI phone agents with ThunderPhone's powerful API"
 ---
 
-## Setting up
+ThunderPhone lets you create AI-powered phone agents that can handle inbound and outbound calls, execute custom tools, and integrate seamlessly with your existing systems.
 
-Get your documentation site up and running in minutes.
+## Get Started
 
 <Card
-  title="Start here"
-  icon="rocket"
+  title="Quickstart"
+  icon="bolt"
   href="/quickstart"
   horizontal
 >
-  Follow our three step quickstart guide.
+  Get your first AI phone agent up and running in minutes.
 </Card>
 
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
+## Core Concepts
 
 <Columns cols={2}>
   <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
+    title="Phone Numbers"
+    icon="phone"
+    href="/api-reference/phone-numbers"
   >
-    Edit your docs locally and preview them in real time.
+    Provision and manage phone numbers for your AI agents.
   </Card>
   <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
+    title="Agents"
+    icon="robot"
+    href="/api-reference/agents"
   >
-    Customize the design and colors of your site to match your brand.
-  </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+    Create AI agents with custom prompts, voices, and tools.
   </Card>
   <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
+    title="Calls"
+    icon="phone-volume"
+    href="/api-reference/calls"
   >
-    Auto-generate API documentation from OpenAPI specifications.
+    View call history, transcripts, and recordings.
+  </Card>
+  <Card
+    title="Webhooks"
+    icon="webhook"
+    href="/webhooks/overview"
+  >
+    Receive real-time notifications and dynamically configure calls.
   </Card>
 </Columns>
 
-## Create beautiful pages
+## API Features
 
-Everything you need to create world-class documentation.
+<CardGroup cols={3}>
+  <Card title="Token Authentication" icon="key">
+    Secure API access with token-based authentication.
+  </Card>
+  <Card title="Inbound & Outbound" icon="phone-arrow-up-right">
+    Handle incoming calls or trigger outbound calls programmatically.
+  </Card>
+  <Card title="Function Tools" icon="wrench">
+    Let your AI agents call your APIs during conversations.
+  </Card>
+  <Card title="Real-time Webhooks" icon="bolt">
+    Get notified instantly when calls start and complete.
+  </Card>
+  <Card title="Transcripts" icon="file-lines">
+    Access full conversation transcripts with timestamps.
+  </Card>
+  <Card title="Recordings" icon="circle-play">
+    Retrieve call recordings via signed URLs.
+  </Card>
+</CardGroup>
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+## Base URL
 
-## Need inspiration?
+All API endpoints use the following base URL:
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+```
+https://api.thunderphone.ai/v1
+```
+
+<Note>
+  Need help? Contact us at [support@thunderphone.ai](mailto:support@thunderphone.ai)
+</Note>

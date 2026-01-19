@@ -1,0 +1,182 @@
+---
+title: "Outbound Calls"
+description: "Trigger AI-powered outbound phone calls programmatically"
+---
+
+Initiate outbound calls from your ThunderPhone numbers with AI agents.
+
+## Endpoint
+
+```
+POST /v1/orgs/:org_id/call
+```
+
+## Request
+
+You can specify an agent by ID or provide a full inline configuration.
+
+### Using Agent ID
+
+```json
+{
+  "from_number": "+15555550100",
+  "to_number": "+15555551234",
+  "agent_id": 12
+}
+```
+
+### Using Inline Config
+
+```json
+{
+  "from_number": "+15555550100",
+  "to_number": "+15555551234",
+  "config": {
+    "prompt": "You are calling to confirm an appointment for tomorrow at 2 PM. Be friendly and concise.",
+    "voice": "en-US-Standard-Journey-D",
+    "product": "spark",
+    "background_track": null,
+    "tools": []
+  }
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `from_number` | string | Yes | Your ThunderPhone number (must belong to your org) |
+| `to_number` | string | Yes | Destination phone number |
+| `agent_id` | integer | No | ID of agent to use |
+| `config` | object | No | Inline agent configuration |
+
+<Note>
+  Either `agent_id` or `config` is required. If neither is provided and the `from_number` has a default `outbound_agent_id`, that agent will be used.
+</Note>
+
+---
+
+## Examples
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.thunderphone.ai/v1/orgs/{org_id}/call \
+  -H "Authorization: Token YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from_number": "+15555550100",
+    "to_number": "+15555551234",
+    "agent_id": 12
+  }'
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    f"https://api.thunderphone.ai/v1/orgs/{org_id}/call",
+    headers={
+        "Authorization": "Token YOUR_API_TOKEN",
+        "Content-Type": "application/json"
+    },
+    json={
+        "from_number": "+15555550100",
+        "to_number": "+15555551234",
+        "agent_id": 12
+    }
+)
+result = response.json()
+print(f"Call initiated: {result['call_id']}")
+```
+
+```javascript Node.js
+const response = await fetch(
+  `https://api.thunderphone.ai/v1/orgs/${orgId}/call`,
+  {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Token YOUR_API_TOKEN',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      from_number: '+15555550100',
+      to_number: '+15555551234',
+      agent_id: 12
+    })
+  }
+);
+const result = await response.json();
+console.log(`Call initiated: ${result.call_id}`);
+```
+</CodeGroup>
+
+---
+
+## Response
+
+```json
+{
+  "call_id": 987654321,
+  "status": "initiated"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `call_id` | integer | Unique identifier for the call |
+| `status` | string | Initial call status (`initiated`) |
+
+---
+
+## Inline Config with Tools
+
+For dynamic outbound calls, provide a complete configuration:
+
+```bash
+curl -X POST https://api.thunderphone.ai/v1/orgs/{org_id}/call \
+  -H "Authorization: Token YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from_number": "+15555550100",
+    "to_number": "+15555551234",
+    "config": {
+      "prompt": "You are calling to follow up on a recent purchase. Ask if the customer has any questions about their order.",
+      "voice": "en-US-Standard-Journey-D",
+      "product": "spark",
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "get_order_status",
+            "description": "Look up the status of a customer order",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "phone_number": {
+                  "type": "string",
+                  "description": "Customer phone number"
+                }
+              },
+              "required": ["phone_number"]
+            }
+          },
+          "endpoint": {
+            "url": "https://api.example.com/orders/lookup",
+            "method": "POST",
+            "headers": {
+              "X-Api-Key": "your-api-key"
+            }
+          }
+        }
+      ]
+    }
+  }'
+```
+
+---
+
+## Error Responses
+
+| Status | Description |
+|--------|-------------|
+| `400` | Invalid request (missing fields, invalid phone number) |
+| `403` | `from_number` does not belong to your organization |
+| `404` | Agent not found |

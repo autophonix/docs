@@ -1,0 +1,270 @@
+---
+title: "Function Tools"
+description: "Let your AI agents call external APIs during conversations"
+---
+
+Function tools allow your AI agents to invoke external APIs during phone calls. Use them to look up customer data, check availability, book appointments, or perform any action your backend supports.
+
+## How It Works
+
+1. You define tools with a schema (what arguments the tool accepts)
+2. You provide an `endpoint` configuration (where ThunderPhone calls your API)
+3. During a call, the AI decides when to use a tool based on the conversation
+4. ThunderPhone calls your endpoint with the tool arguments
+5. Your API response is fed back to the AI to continue the conversation
+
+---
+
+## Tool Schema
+
+Each tool follows this structure:
+
+```json
+{
+  "type": "function",
+  "function": {
+    "name": "search_appointments",
+    "description": "Find available appointment slots for a given date",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "date": {
+          "type": "string",
+          "description": "Date in YYYY-MM-DD format"
+        },
+        "service": {
+          "type": "string",
+          "description": "Type of service (e.g., 'consultation', 'follow-up')"
+        }
+      },
+      "required": ["date"]
+    }
+  },
+  "endpoint": {
+    "url": "https://api.example.com/appointments/search",
+    "method": "POST",
+    "headers": {
+      "X-Api-Key": "your-api-key"
+    }
+  }
+}
+```
+
+### Function Definition
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | Yes | Unique identifier for the tool |
+| `description` | string | Yes | Explains to the AI when to use this tool |
+| `parameters` | object | Yes | JSON Schema for tool arguments |
+
+### Endpoint Configuration
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `url` | string | Yes | Your API endpoint URL |
+| `method` | string | No | HTTP method (default: `POST`) |
+| `headers` | object | No | Custom headers to include |
+
+<Note>
+  The `endpoint` configuration is **not** sent to the AI model—it's only used by ThunderPhone to execute the tool call.
+</Note>
+
+---
+
+## Tool Call Execution
+
+When the AI invokes a tool, ThunderPhone sends a request to your endpoint:
+
+### Request Headers
+
+```http
+POST /appointments/search HTTP/1.1
+Host: api.example.com
+Content-Type: application/json
+X-ThunderPhone-Signature: abc123...
+X-ThunderPhone-Call-ID: 987654321
+X-Api-Key: your-api-key
+```
+
+Custom headers from your `endpoint.headers` are included, plus:
+- `X-ThunderPhone-Signature` — HMAC-SHA256 of the request body
+- `X-ThunderPhone-Call-ID` — The current call ID
+
+### Request Body
+
+The body contains **only** the tool arguments (no wrapper):
+
+```json
+{
+  "date": "2025-01-02",
+  "service": "consultation"
+}
+```
+
+### Response
+
+Return a JSON response with the tool result:
+
+```json
+{
+  "available_slots": ["9:00 AM", "2:00 PM", "4:30 PM"],
+  "timezone": "America/Los_Angeles"
+}
+```
+
+The response is formatted and provided to the AI to continue the conversation.
+
+---
+
+## Signature Verification
+
+Tool calls are signed the same way as webhooks:
+
+- HMAC-SHA256 of the JSON request body
+- Uses your org webhook secret
+- Payload serialized with sorted keys, no extra whitespace
+
+<CodeGroup>
+```python Python
+import hmac
+import hashlib
+
+def verify_tool_call(body: bytes, signature: str, secret: str) -> bool:
+    expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, signature)
+
+@app.post("/appointments/search")
+async def search_appointments(request: Request):
+    body = await request.body()
+    signature = request.headers.get("X-ThunderPhone-Signature", "")
+    
+    if not verify_tool_call(body, signature, WEBHOOK_SECRET):
+        raise HTTPException(status_code=401)
+    
+    data = json.loads(body)
+    date = data["date"]
+    
+    # Look up availability
+    slots = await get_available_slots(date)
+    
+    return {"available_slots": slots}
+```
+
+```javascript Node.js
+app.post('/appointments/search', express.raw({type: 'application/json'}), (req, res) => {
+  const signature = req.headers['x-thunderphone-signature'];
+  const expected = crypto
+    .createHmac('sha256', WEBHOOK_SECRET)
+    .update(req.body)
+    .digest('hex');
+  
+  if (!crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature))) {
+    return res.status(401).send('Invalid signature');
+  }
+  
+  const { date, service } = JSON.parse(req.body);
+  
+  // Look up availability
+  const slots = getAvailableSlots(date, service);
+  
+  res.json({ available_slots: slots });
+});
+```
+</CodeGroup>
+
+---
+
+## Example: Complete Booking Flow
+
+Here's a set of tools for a complete appointment booking system:
+
+```json
+{
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "search_appointments",
+        "description": "Find available appointment slots",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "date": { "type": "string", "description": "YYYY-MM-DD" },
+            "service": { "type": "string" }
+          },
+          "required": ["date"]
+        }
+      },
+      "endpoint": {
+        "url": "https://api.example.com/appointments/search",
+        "method": "POST",
+        "headers": { "X-Api-Key": "key" }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "book_appointment",
+        "description": "Book an appointment at a specific time",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "date": { "type": "string", "description": "YYYY-MM-DD" },
+            "time": { "type": "string", "description": "HH:MM format" },
+            "customer_name": { "type": "string" },
+            "customer_phone": { "type": "string" }
+          },
+          "required": ["date", "time", "customer_name"]
+        }
+      },
+      "endpoint": {
+        "url": "https://api.example.com/appointments/book",
+        "method": "POST",
+        "headers": { "X-Api-Key": "key" }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "cancel_appointment",
+        "description": "Cancel an existing appointment",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "confirmation_number": { "type": "string" }
+          },
+          "required": ["confirmation_number"]
+        }
+      },
+      "endpoint": {
+        "url": "https://api.example.com/appointments/cancel",
+        "method": "POST",
+        "headers": { "X-Api-Key": "key" }
+      }
+    }
+  ]
+}
+```
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Write clear descriptions">
+    The `description` field helps the AI understand **when** to use the tool. Be specific about what it does and when it's appropriate.
+  </Accordion>
+
+  <Accordion title="Handle errors gracefully">
+    Return error messages the AI can understand: `{"error": "No slots available for that date"}` rather than generic 500 errors.
+  </Accordion>
+
+  <Accordion title="Keep responses concise">
+    Return only what the AI needs to continue the conversation. Large payloads slow down response times.
+  </Accordion>
+
+  <Accordion title="Use required fields wisely">
+    Mark fields as `required` only when truly necessary. The AI will ask the user for required information before calling the tool.
+  </Accordion>
+</AccordionGroup>
