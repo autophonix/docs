@@ -100,5 +100,8 @@
       "x": "https://x.com/thunderphone",
       "github": "https://github.com/thunderphone"
     }
+  },
+  "appearance": {
+    "strict": true
   }
 }
