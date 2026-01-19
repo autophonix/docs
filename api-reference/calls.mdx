@@ -73,11 +73,11 @@ Retrieve calls with optional filtering.
 <CodeGroup>
 ```bash cURL
 # List recent calls
-curl "https://api.thunderphone.ai/v1/orgs/{org_id}/calls?limit=20" \
+curl "https://api.thunderphone.com/v1/orgs/{org_id}/calls?limit=20" \
   -H "Authorization: Token YOUR_API_TOKEN"
 
 # Filter by agent and direction
-curl "https://api.thunderphone.ai/v1/orgs/{org_id}/calls?agent_id=12&direction=inbound" \
+curl "https://api.thunderphone.com/v1/orgs/{org_id}/calls?agent_id=12&direction=inbound" \
   -H "Authorization: Token YOUR_API_TOKEN"
 ```
 
@@ -86,7 +86,7 @@ import requests
 
 # List calls with filters
 response = requests.get(
-    f"https://api.thunderphone.ai/v1/orgs/{org_id}/calls",
+    f"https://api.thunderphone.com/v1/orgs/{org_id}/calls",
     headers={"Authorization": "Token YOUR_API_TOKEN"},
     params={
         "agent_id": 12,
@@ -105,7 +105,7 @@ const params = new URLSearchParams({
 });
 
 const response = await fetch(
-  `https://api.thunderphone.ai/v1/orgs/${orgId}/calls?${params}`,
+  `https://api.thunderphone.com/v1/orgs/${orgId}/calls?${params}`,
   {
     headers: { 'Authorization': 'Token YOUR_API_TOKEN' }
   }
@@ -121,7 +121,7 @@ const calls = await response.json();
 Retrieve details for a specific call.
 
 ```bash
-curl https://api.thunderphone.ai/v1/orgs/{org_id}/calls/987654321 \
+curl https://api.thunderphone.com/v1/orgs/{org_id}/calls/987654321 \
   -H "Authorization: Token YOUR_API_TOKEN"
 ```
 
@@ -132,7 +132,7 @@ curl https://api.thunderphone.ai/v1/orgs/{org_id}/calls/987654321 \
 Returns a redirect to a signed URL for the call recording (1-hour expiry).
 
 ```bash
-curl -L https://api.thunderphone.ai/v1/orgs/{org_id}/calls/987654321/audio \
+curl -L https://api.thunderphone.com/v1/orgs/{org_id}/calls/987654321/audio \
   -H "Authorization: Token YOUR_API_TOKEN" \
   -o recording.mp3
 ```
@@ -154,7 +154,7 @@ Location: https://storage.googleapis.com/...?Signature=...&Expires=...
 Retrieve the full conversation transcript with timestamps.
 
 ```bash
-curl https://api.thunderphone.ai/v1/orgs/{org_id}/calls/987654321/transcript \
+curl https://api.thunderphone.com/v1/orgs/{org_id}/calls/987654321/transcript \
   -H "Authorization: Token YOUR_API_TOKEN"
 ```
 

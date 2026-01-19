@@ -21,7 +21,7 @@ Retrieve all organizations you have access to.
 
 <CodeGroup>
 ```bash cURL
-curl https://api.thunderphone.ai/v1/orgs/ \
+curl https://api.thunderphone.com/v1/orgs/ \
   -H "Authorization: Token YOUR_API_TOKEN"
 ```
 
@@ -29,7 +29,7 @@ curl https://api.thunderphone.ai/v1/orgs/ \
 import requests
 
 response = requests.get(
-    "https://api.thunderphone.ai/v1/orgs/",
+    "https://api.thunderphone.com/v1/orgs/",
     headers={"Authorization": "Token YOUR_API_TOKEN"}
 )
 orgs = response.json()
@@ -54,7 +54,7 @@ ThunderPhone sends all outbound webhook events to a single org-level URL. Config
 
 <CodeGroup>
 ```bash cURL
-curl -X PUT https://api.thunderphone.ai/v1/orgs/{org_id}/webhook \
+curl -X PUT https://api.thunderphone.com/v1/orgs/{org_id}/webhook \
   -H "Authorization: Token YOUR_API_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -64,7 +64,7 @@ curl -X PUT https://api.thunderphone.ai/v1/orgs/{org_id}/webhook \
 
 ```python Python
 response = requests.put(
-    f"https://api.thunderphone.ai/v1/orgs/{org_id}/webhook",
+    f"https://api.thunderphone.com/v1/orgs/{org_id}/webhook",
     headers={
         "Authorization": "Token YOUR_API_TOKEN",
         "Content-Type": "application/json"

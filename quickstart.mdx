@@ -8,14 +8,14 @@ This guide walks you through setting up ThunderPhone to handle your first AI-pow
 ## Prerequisites
 
 <Info>
-  You'll need a ThunderPhone account. [Sign up](https://app.thunderphone.ai) if you haven't already.
+  You'll need a ThunderPhone account. [Sign up](https://app.thunderphone.com) if you haven't already.
 </Info>
 
 ## Step 1: Get Your API Token
 
 <Steps>
 <Step title="Log into ThunderPhone Dashboard">
-  Go to [app.thunderphone.ai](https://app.thunderphone.ai) and sign in to your account.
+  Go to [app.thunderphone.com](https://app.thunderphone.com) and sign in to your account.
 </Step>
 
 <Step title="Navigate to Settings">
@@ -33,7 +33,7 @@ An agent defines how your AI handles conversations—including the system prompt
 
 <CodeGroup>
 ```bash cURL
-curl -X POST https://api.thunderphone.ai/v1/orgs/{org_id}/agents \
+curl -X POST https://api.thunderphone.com/v1/orgs/{org_id}/agents \
   -H "Authorization: Token YOUR_API_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -48,7 +48,7 @@ curl -X POST https://api.thunderphone.ai/v1/orgs/{org_id}/agents \
 import requests
 
 response = requests.post(
-    "https://api.thunderphone.ai/v1/orgs/{org_id}/agents",
+    "https://api.thunderphone.com/v1/orgs/{org_id}/agents",
     headers={
         "Authorization": "Token YOUR_API_TOKEN",
         "Content-Type": "application/json"
@@ -67,7 +67,7 @@ print(f"Created agent with ID: {agent['id']}")
 
 ```javascript Node.js
 const response = await fetch(
-  `https://api.thunderphone.ai/v1/orgs/${orgId}/agents`,
+  `https://api.thunderphone.com/v1/orgs/${orgId}/agents`,
   {
     method: 'POST',
     headers: {
@@ -96,7 +96,7 @@ console.log(`Created agent with ID: ${agent.id}`);
 
 <CodeGroup>
 ```bash cURL
-curl -X POST https://api.thunderphone.ai/v1/orgs/{org_id}/phone-numbers \
+curl -X POST https://api.thunderphone.com/v1/orgs/{org_id}/phone-numbers \
   -H "Authorization: Token YOUR_API_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -106,7 +106,7 @@ curl -X POST https://api.thunderphone.ai/v1/orgs/{org_id}/phone-numbers \
 
 ```python Python
 response = requests.post(
-    "https://api.thunderphone.ai/v1/orgs/{org_id}/phone-numbers",
+    "https://api.thunderphone.com/v1/orgs/{org_id}/phone-numbers",
     headers={
         "Authorization": "Token YOUR_API_TOKEN",
         "Content-Type": "application/json"
@@ -128,7 +128,7 @@ Save the returned phone number—this is the number callers will dial to reach y
 For real-time notifications and dynamic call configuration, set up a webhook endpoint:
 
 ```bash
-curl -X PUT https://api.thunderphone.ai/v1/orgs/{org_id}/webhook \
+curl -X PUT https://api.thunderphone.com/v1/orgs/{org_id}/webhook \
   -H "Authorization: Token YOUR_API_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -149,7 +149,7 @@ Call your new phone number! The AI agent will answer and respond according to yo
 You can view call details in the dashboard or via the API:
 
 ```bash
-curl https://api.thunderphone.ai/v1/orgs/{org_id}/calls \
+curl https://api.thunderphone.com/v1/orgs/{org_id}/calls \
   -H "Authorization: Token YOUR_API_TOKEN"
 ```
 

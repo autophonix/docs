@@ -17,7 +17,7 @@ Authorization: Token YOUR_API_TOKEN
 
 <CodeGroup>
 ```bash cURL
-curl https://api.thunderphone.ai/v1/orgs/{org_id}/agents \
+curl https://api.thunderphone.com/v1/orgs/{org_id}/agents \
   -H "Authorization: Token YOUR_API_TOKEN"
 ```
 
@@ -25,14 +25,14 @@ curl https://api.thunderphone.ai/v1/orgs/{org_id}/agents \
 import requests
 
 response = requests.get(
-    "https://api.thunderphone.ai/v1/orgs/{org_id}/agents",
+    "https://api.thunderphone.com/v1/orgs/{org_id}/agents",
     headers={"Authorization": "Token YOUR_API_TOKEN"}
 )
 ```
 
 ```javascript Node.js
 const response = await fetch(
-  `https://api.thunderphone.ai/v1/orgs/${orgId}/agents`,
+  `https://api.thunderphone.com/v1/orgs/${orgId}/agents`,
   {
     headers: {
       'Authorization': 'Token YOUR_API_TOKEN'
@@ -48,7 +48,7 @@ When using the ThunderPhone dashboard, authentication is handled via browser coo
 
 ## Getting Your API Token
 
-1. Log into the [ThunderPhone Dashboard](https://app.thunderphone.ai)
+1. Log into the [ThunderPhone Dashboard](https://app.thunderphone.com)
 2. Navigate to **Settings** → **API Keys**
 3. Click **Create API Key**
 4. Copy and securely store your token
@@ -62,7 +62,7 @@ When using the ThunderPhone dashboard, authentication is handled via browser coo
 All API requests should be made to:
 
 ```
-https://api.thunderphone.ai/v1
+https://api.thunderphone.com/v1
 ```
 
 ## ID Format
@@ -81,7 +81,7 @@ All resource IDs in the ThunderPhone API are integers (auto-incrementing primary
 Verify API connectivity:
 
 ```bash
-curl https://api.thunderphone.ai/v1/healthz
+curl https://api.thunderphone.com/v1/healthz
 ```
 
 Response:
