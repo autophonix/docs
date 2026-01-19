@@ -7,7 +7,7 @@
     "light": "#8B95A6",
     "dark": "#2A3141"
   },
-  "favicon": "/images/thunderphone-icon.png",
+  "favicon": "/favicon.png",
   "navigation": {
     "tabs": [
       {
@@ -79,8 +79,8 @@
     }
   },
   "logo": {
-    "light": "/bad_logo.png",
-    "dark": "/bad_logo.png"
+    "light": "/thunderphone_logo.png",
+    "dark": "/thunderphone_logo.png"
   },
   "navbar": {
     "links": [
