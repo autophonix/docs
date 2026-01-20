@@ -79,8 +79,8 @@
     }
   },
   "logo": {
-    "light": "/thunderphone_logo.png",
-    "dark": "/thunderphone_logo.png"
+    "light": "/thunderphone_logo.svg",
+    "dark": "/thunderphone_logo.svg"
   },
   "navbar": {
     "links": [
